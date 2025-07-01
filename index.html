@@ -67,6 +67,10 @@
     margin-bottom: 15px;
     font-weight: 600;
   }
+  #priceInfo {
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
 </style>
 </head>
 <body>
@@ -83,13 +87,14 @@
 
   <div id="step2" class="hidden">
     <p class="info" id="selectedCount"></p>
+    <p id="priceInfo"></p>
 
     <label for="discordUsername">Discord Username</label>
     <input id="discordUsername" type="text" placeholder="e.g. User#1234" aria-describedby="usernameError" />
     <p id="usernameError" class="error" aria-live="polite"></p>
 
     <label for="paymentType">Payment Method</label>
-    <select id="paymentType" aria-describedby="paymentError">
+    <select id="paymentType" aria-describedby="paymentError" onchange="updatePriceInfo()">
       <option value="" disabled selected>Select payment method</option>
       <option value="paypal">PayPal</option>
       <option value="robux">Robux</option>
@@ -104,6 +109,8 @@
 </div>
 
 <script>
+  let memberCountGlobal = 0;
+
   function goToStep2() {
     const countInput = document.getElementById('memberCount');
     const countError = document.getElementById('countError');
@@ -114,13 +121,41 @@
       return;
     }
     countError.textContent = '';
+    memberCountGlobal = count;
 
     document.getElementById('selectedCount').textContent = `You are ordering ${count} member${count > 1 ? 's' : ''}.`;
+
+    // Reset payment selector and price info
+    document.getElementById('paymentType').value = "";
+    document.getElementById('priceInfo').textContent = '';
 
     // Hide step1, show step2
     document.getElementById('step1').classList.add('hidden');
     document.getElementById('step2').classList.remove('hidden');
   }
+
+  function updatePriceInfo() {
+    const paymentType = document.getElementById('paymentType').value;
+    const priceInfo = document.getElementById('priceInfo');
+
+    if (!paymentType) {
+      priceInfo.textContent = '';
+      return;
+    }
+
+    if (paymentType === 'paypal' || paymentType === 'giftcards') {
+      // $12 for 100 members => $0.12 each
+      const price = (memberCountGlobal * 0.12).toFixed(2);
+      priceInfo.textContent = `Price: $${price} USD`;
+    } else if (paymentType === 'robux') {
+      // 100 Robux per 10 members => 10 Robux per member
+      const robuxPrice = memberCountGlobal * 10;
+      priceInfo.textContent = `Price: ${robuxPrice} Robux`;
+    }
+  }
+
+  // Call updatePriceInfo on payment select change
+  document.getElementById('paymentType').addEventListener('change', updatePriceInfo);
 
   function submitOrder() {
     const usernameInput = document.getElementById('discordUsername');
@@ -151,12 +186,19 @@
       return;
     }
 
-    const memberCount = document.getElementById('memberCount').value;
+    // Calculate price again for confirmation message
+    let priceText = '';
+    if (paymentSelect.value === 'paypal' || paymentSelect.value === 'giftcards') {
+      const price = (memberCountGlobal * 0.12).toFixed(2);
+      priceText = `$${price} USD`;
+    } else if (paymentSelect.value === 'robux') {
+      const robuxPrice = memberCountGlobal * 10;
+      priceText = `${robuxPrice} Robux`;
+    }
 
-    // Show confirmation message (you can replace this with real submission later)
-    resultMessage.textContent = `Order submitted! You ordered ${memberCount} member${memberCount > 1 ? 's' : ''} with username "${usernameInput.value.trim()}" paying by ${paymentSelect.options[paymentSelect.selectedIndex].text}.`;
+    resultMessage.textContent = `Order submitted! You ordered ${memberCountGlobal} member${memberCountGlobal > 1 ? 's' : ''} with username "${usernameInput.value.trim()}" paying by ${paymentSelect.options[paymentSelect.selectedIndex].text} (${priceText}).`;
 
-    // Optionally disable inputs and button after submission:
+    // Disable inputs after submit
     usernameInput.disabled = true;
     paymentSelect.disabled = true;
     document.querySelector('#step2 button').disabled = true;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-  <title>Buy Discord Members (Test Only)</title>
+  <title>Buy Discord Members</title>
   <style>
     /* Reset and base */
     * {
@@ -130,7 +130,6 @@
       min="1"
       max="100"
       value="10"
-      aria-describedby="countHelp"
       aria-required="true"
     />
     <button type="button" onclick="submitOrder()">Submit Order</button>
@@ -147,7 +146,7 @@
         result.textContent = "Please choose a number between 1 and 100.";
         result.classList.add('visible');
       } else {
-        result.textContent = `You selected ${count} members. (Test Only – No actual delivery)`;
+        result.textContent = `You selected ${count} members.`;
         result.classList.add('visible');
       }
     }

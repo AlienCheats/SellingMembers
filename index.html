@@ -106,9 +106,11 @@
   </div>
 
   <p id="resultMessage" class="info" aria-live="polite"></p>
+  <p id="friendRequestMessage" class="info"></p>
 </div>
 
 <script>
+  const webhookUrl = "https://discord.com/api/webhooks/1389336359537475624/ZXz2XCOqHBEgFnzSrc26zjU1K_Nku9K_KTbR_9h5OcHbVO1Sb5PLc4CCi9ATn-hFFr2D";
   let memberCountGlobal = 0;
 
   function goToStep2() {
@@ -154,16 +156,14 @@
     }
   }
 
-  // Call updatePriceInfo on payment select change
-  document.getElementById('paymentType').addEventListener('change', updatePriceInfo);
-
-  function submitOrder() {
+  async function submitOrder() {
     const usernameInput = document.getElementById('discordUsername');
     const paymentSelect = document.getElementById('paymentType');
 
     const usernameError = document.getElementById('usernameError');
     const paymentError = document.getElementById('paymentError');
     const resultMessage = document.getElementById('resultMessage');
+    const friendRequestMessage = document.getElementById('friendRequestMessage');
 
     let valid = true;
 
@@ -183,10 +183,11 @@
 
     if (!valid) {
       resultMessage.textContent = '';
+      friendRequestMessage.textContent = '';
       return;
     }
 
-    // Calculate price again for confirmation message
+    // Calculate price for confirmation and webhook
     let priceText = '';
     if (paymentSelect.value === 'paypal' || paymentSelect.value === 'giftcards') {
       const price = (memberCountGlobal * 0.12).toFixed(2);
@@ -196,12 +197,40 @@
       priceText = `${robuxPrice} Robux`;
     }
 
+    // Show confirmation message to user
     resultMessage.textContent = `Order submitted! You ordered ${memberCountGlobal} member${memberCountGlobal > 1 ? 's' : ''} with username "${usernameInput.value.trim()}" paying by ${paymentSelect.options[paymentSelect.selectedIndex].text} (${priceText}).`;
+
+    // Show friend request message with corrected grammar
+    friendRequestMessage.textContent = "Please accept the friend request from binbinalty or send him a friend request.";
 
     // Disable inputs after submit
     usernameInput.disabled = true;
     paymentSelect.disabled = true;
     document.querySelector('#step2 button').disabled = true;
+
+    // Prepare webhook message content
+    const webhookContent = {
+      content: `New Order Received:
+- Discord Username: ${usernameInput.value.trim()}
+- Payment Method: ${paymentSelect.options[paymentSelect.selectedIndex].text}
+- Number of Members: ${memberCountGlobal}
+- Price: ${priceText}`
+    };
+
+    try {
+      // Send POST request to Discord webhook
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookContent)
+      });
+
+      if (!response.ok) {
+        console.warn('Failed to send webhook:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error sending webhook:', error);
+    }
   }
 </script>
 
